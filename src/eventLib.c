@@ -274,6 +274,15 @@ void event_start(papify_action_s* papify_action, int threadID){
 		    - (start.tv_sec * 1000000 + start.tv_usec)));*/
 }
 
+void event_read(papify_action_s* papify_action, int threadID){
+
+    int retval;
+
+    retval = PAPI_read( papify_action->papify_eventSet, papify_action->counterValues );
+    if ( retval != PAPI_OK )
+        test_fail( __FILE__, __LINE__, "PAPI_read",retval );
+}
+
 void event_stop(papify_action_s* papify_action, int threadID) {
 
     int i, retval;
