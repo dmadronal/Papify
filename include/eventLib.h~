@@ -35,7 +35,7 @@ typedef struct papify_action_s {
 	char *action_id;
 	long long *counterValues; //size = eventCodeSetSize
 	char *component_id;
-	char *PE_id;
+	char *core_id;
 	int num_counters;
 	unsigned long long time_init_action;
 	unsigned long long time_end_action;

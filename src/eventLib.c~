@@ -317,7 +317,7 @@ void event_write_file(papify_action_s* papify_action){
 
 	papify_action[0].papify_output_file = fopen(output_file_name,"a+");
 
-	fprintf(papify_action[0].papify_output_file, "%s,%s,%llu,%llu", papify_action[0].PE_id, papify_action[0].action_id, papify_action[0].time_init_action, papify_action[0].time_end_action);
+	fprintf(papify_action[0].papify_output_file, "%s,%s,%llu,%llu", papify_action[0].component_id, papify_action[0].action_id, papify_action[0].time_init_action, papify_action[0].time_end_action);
 
 	for(i = 0; i < papify_action[0].num_counters; i++){
 		fprintf(papify_action[0].papify_output_file, ",%lu", papify_action[0].counterValues[i]);
