@@ -34,6 +34,8 @@ static int TESTS_COLOR = 0;
 typedef struct papify_action_s {
 	char *action_id;
 	long long *counterValues; //size = eventCodeSetSize
+	long long *counterValuesStart; //size = eventCodeSetSize
+	long long *counterValuesStop; //size = eventCodeSetSize
 	char *component_id;
 	char *PE_id;
 	int num_counters;
