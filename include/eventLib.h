@@ -43,7 +43,7 @@ typedef struct papify_action_s {
 	unsigned long long time_end_action;
 	FILE* papify_output_file;
 	int* papify_eventCodeSet;
-	unsigned long papify_eventSet;
+	int papify_eventSet;
 	FILE* eventset_test_file;
 	
 } papify_action_s;

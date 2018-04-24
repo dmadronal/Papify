@@ -12,7 +12,7 @@ unsigned long tot_end;
 
 unsigned long long time_zero;
 
-unsigned long papify_eventSet_PEs[50];
+int papify_eventSet_PEs[50];
 int papify_eventSet_PEs_launched[50];
 
 
@@ -117,7 +117,6 @@ void event_init(void) {
     if (pthread_mutex_init(&lock, NULL) != 0)
     {
         printf("\n mutex init failed\n");
-        return 1;
     }
 
 }
@@ -151,7 +150,6 @@ void event_init_multiplex(void) {
     if (pthread_mutex_init(&lock, NULL) != 0)
     {
         printf("\n mutex init failed\n");
-        return 1;
     }
 
 }
@@ -334,7 +332,7 @@ void event_init_papify_actions(papify_action_s* papify_action, char* componentNa
 	papify_action[0].num_counters = num_events;
 
 	papify_action->papify_eventCodeSet = malloc(sizeof(int) * num_events);
-	papify_action->papify_eventSet = malloc(sizeof(unsigned long) * 1);
+	papify_action->papify_eventSet = malloc(sizeof(int) * 1);
 	papify_action->papify_eventSet = PAPI_NULL;
 	papify_action->papify_output_file = malloc(sizeof(FILE) * 1);
 }
