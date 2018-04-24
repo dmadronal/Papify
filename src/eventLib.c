@@ -247,30 +247,32 @@ void event_launch(papify_action_s* papify_action, int PE_id){
     //retval = PAPI_start( papify_action->papify_eventSet );
     retval = PAPI_start( papify_eventSet_PEs[PE_id] );
     if ( retval != PAPI_OK )
-        test_fail( __FILE__, __LINE__, "PAPI_read",retval );
+        test_fail( __FILE__, __LINE__, "PAPI_start",retval );
 }
 
 void event_start(papify_action_s* papify_action, int PE_id){
 
     int retval;
     //retval = PAPI_read( papify_action->papify_eventSet, papify_action->counterValuesStart );
-    retval = PAPI_read( papify_eventSet_PEs[PE_id], papify_action->counterValuesStart );
+    if(papify_action[0].num_counters != 0){
+    	retval = PAPI_read( papify_eventSet_PEs[PE_id], papify_action->counterValuesStart );
+    }
     if ( retval != PAPI_OK )
-        test_fail( __FILE__, __LINE__, "PAPI_start",retval );
+        test_fail( __FILE__, __LINE__, "PAPI_read",retval );
 }
 
 void event_stop(papify_action_s* papify_action, int PE_id) {
 
     int retval, i;
     //retval = PAPI_read( papify_action->papify_eventSet, papify_action->counterValuesStop );
-    retval = PAPI_read( papify_eventSet_PEs[PE_id], papify_action->counterValuesStop );
-
-    for(i = 0; i < papify_action[0].num_counters; i++){
-	papify_action[0].counterValues[i] = papify_action[0].counterValuesStop[i] - papify_action[0].counterValuesStart[i];
+    if(papify_action[0].num_counters != 0){
+    	retval = PAPI_read( papify_eventSet_PEs[PE_id], papify_action->counterValuesStop );
+	for(i = 0; i < papify_action[0].num_counters; i++){
+	    papify_action[0].counterValues[i] = papify_action[0].counterValuesStop[i] - papify_action[0].counterValuesStart[i];
+	}
     }
-
     if ( retval != PAPI_OK )
-        test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
+        test_fail( __FILE__, __LINE__, "PAPI_read", retval );
 
 }
 
@@ -353,7 +355,7 @@ void configure_papify(papify_action_s* papify_action, char* componentName, char*
 	event_init_output_file(papify_action, actorName, all_events_name);
 
 	pthread_mutex_lock(&lock);
-    	if(papify_eventSet_PEs_launched[PE_id] == 0){
+    	if(papify_eventSet_PEs_launched[PE_id] == 0 && papify_action[0].num_counters != 0){
 		event_init_event_code_set(papify_action, num_events, all_events_name);
 	
 		event_create_eventList_unified(papify_action);
