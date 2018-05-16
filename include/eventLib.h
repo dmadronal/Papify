@@ -12,7 +12,6 @@
 #endif
 
 #include <errno.h>
-#include <memory.h>
 #if !defined(__FreeBSD__) && !defined(__APPLE__)
 #include <malloc.h>
 #endif
