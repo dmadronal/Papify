@@ -3,19 +3,16 @@
 
 #include <time.h>
 
-int total = 0;
-
 pthread_mutex_t lock;
-
-unsigned long tot_start;
-unsigned long tot_end;
 
 unsigned long long time_zero;
 
-int papify_eventSet_PEs[50];
-int papify_eventSet_PEs_launched[50];
+int papify_eventSet_PEs[500];
+int papify_eventSet_PEs_launched[500];
 
-
+/* 
+* Print the structure to check whether it is configured correctly
+*/
 void structure_test(papify_action_s *someAction, int eventCodeSetSize, int *eventCodeSet){
     int i;
     printf("Action name: %s\n", someAction->action_id);
@@ -25,6 +22,9 @@ void structure_test(papify_action_s *someAction, int eventCodeSetSize, int *even
     }
 }
 
+/* 
+* Test function to check where the monitoring is failing
+*/
 static void test_fail( char *file, int line, char *call, int retval ) {
 
     int line_pad;
@@ -64,6 +64,10 @@ static void test_fail( char *file, int line, char *call, int retval ) {
     exit(1);
 }
 
+/* 
+* Initialize multiplex functionalities
+*/
+
 static void init_multiplex( void ) {
 
     int retval;
@@ -97,6 +101,10 @@ static void init_multiplex( void ) {
 }
 
 
+/* 
+* Initialize PAPI library and get the init time (this function should be the called before any other monitoring function)
+* It also stores the value of time_zero, which should be the starting point of the program
+*/
 void event_init(void) {
 
     int retval;
@@ -118,9 +126,11 @@ void event_init(void) {
     {
         printf("\n mutex init failed\n");
     }
-
 }
 
+/* 
+* Initialize PAPI library and multiplex functionalities
+*/
 void event_init_multiplex(void) {
 
     int retval;
@@ -151,9 +161,11 @@ void event_init_multiplex(void) {
     {
         printf("\n mutex init failed\n");
     }
-
 }
 
+/* 
+* Activates the multiplexing functionality when monitoring the system
+*/
 void eventList_set_multiplex_unified(papify_action_s* papify_action){
 	int retval;
 
@@ -169,10 +181,7 @@ void event_create_eventList_unified(papify_action_s* papify_action) {
     unsigned long threadId;
 
     maxNumberHwCounters = PAPI_get_opt( PAPI_MAX_HWCTRS, NULL );
-    //printf("Max number of hardware counters = %d \n", maxNumberHwCounters);
-
     eventCodeSetMaxSize = PAPI_get_opt( PAPI_MAX_MPX_CTRS, NULL );
-    //printf("Max number of multiplexed counters = %d \n", eventCodeSetMaxSize);
 
     if ( eventCodeSetMaxSize < papify_action[0].num_counters)
         test_fail( __FILE__, __LINE__, "eventCodeSetMaxSize < eventCodeSetSize, too many performance events defined! ", retval );
@@ -203,68 +212,44 @@ void event_create_eventList_unified(papify_action_s* papify_action) {
         retval = PAPI_add_event( papify_action[0].papify_eventSet, info.event_code);
         if ( retval != PAPI_OK )
             test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
-        /*else
-            printf("Adding %s \n", info.symbol);*/
-
     }
-
 }
 
-/*void event_start(papify_action_s* papify_action, int threadID){
+/* 
+* Launch the monitoring of the eventSet. This eventSet will be counting from the beginning and the actual values will
+* be computed by differences with event_start and event_stop functions
+*/
+void event_launch(papify_action_s* papify_action, int eventSet_id){
 
     int retval;
-    retval = PAPI_start( papify_action->papify_eventSet );
+    papify_eventSet_PEs[eventSet_id] = papify_action[0].papify_eventSet;
+    retval = PAPI_start( papify_eventSet_PEs[eventSet_id] );
     if ( retval != PAPI_OK )
         test_fail( __FILE__, __LINE__, "PAPI_start",retval );
 }
 
-void event_read(papify_action_s* papify_action, int threadID){
+/* 
+* Read the current values of the event counters and stores them as the starting point
+*/
+void event_start(papify_action_s* papify_action, int eventSet_id){
 
     int retval;
-
-    retval = PAPI_read( papify_action->papify_eventSet, papify_action->counterValues );
-    if ( retval != PAPI_OK )
-        test_fail( __FILE__, __LINE__, "PAPI_read",retval );
-}
-
-void event_stop(papify_action_s* papify_action, int threadID) {
-
-    int retval;
-    retval = PAPI_stop( papify_action->papify_eventSet, papify_action->counterValues );
-
-    if ( retval != PAPI_OK )
-        test_fail( __FILE__, __LINE__, "PAPI_stop", retval );
-
-}*/
-
-
-void event_launch(papify_action_s* papify_action, int PE_id){
-
-    int retval;
-    papify_eventSet_PEs[PE_id] = papify_action[0].papify_eventSet;
-    //retval = PAPI_start( papify_action->papify_eventSet );
-    retval = PAPI_start( papify_eventSet_PEs[PE_id] );
-    if ( retval != PAPI_OK )
-        test_fail( __FILE__, __LINE__, "PAPI_start",retval );
-}
-
-void event_start(papify_action_s* papify_action, int PE_id){
-
-    int retval;
-    //retval = PAPI_read( papify_action->papify_eventSet, papify_action->counterValuesStart );
     if(papify_action[0].num_counters != 0){
-    	retval = PAPI_read( papify_eventSet_PEs[PE_id], papify_action->counterValuesStart );
+    	retval = PAPI_read( papify_eventSet_PEs[eventSet_id], papify_action->counterValuesStart );
     }
     if ( retval != PAPI_OK )
         test_fail( __FILE__, __LINE__, "PAPI_read",retval );
 }
 
-void event_stop(papify_action_s* papify_action, int PE_id) {
+/* 
+* Read the current values of the event counters and stores them as the ending point.
+* After that, the total value is computed by differences and stored as the total value
+*/
+void event_stop(papify_action_s* papify_action, int eventSet_id) {
 
     int retval, i;
-    //retval = PAPI_read( papify_action->papify_eventSet, papify_action->counterValuesStop );
     if(papify_action[0].num_counters != 0){
-    	retval = PAPI_read( papify_eventSet_PEs[PE_id], papify_action->counterValuesStop );
+    	retval = PAPI_read( papify_eventSet_PEs[eventSet_id], papify_action->counterValuesStop );
 	for(i = 0; i < papify_action[0].num_counters; i++){
 	    papify_action[0].counterValues[i] = papify_action[0].counterValuesStop[i] - papify_action[0].counterValuesStart[i];
 	}
@@ -274,6 +259,9 @@ void event_stop(papify_action_s* papify_action, int PE_id) {
 
 }
 
+/* 
+* Create the .csv file associated to each function and prints the header of the file
+*/
 void event_init_output_file(papify_action_s* papify_action, char* actorName, char* all_events_name) {
 	
 	char file_name[256];
@@ -287,6 +275,9 @@ void event_init_output_file(papify_action_s* papify_action, char* actorName, cha
 	fclose(papify_action->papify_output_file);
 }
 
+/* 
+* This function translates the name of the events to be monitored to the PAPI codes associated to each event
+*/
 void event_init_event_code_set(papify_action_s* papify_action, int code_set_size, char* all_events_name) {
 	
 	int i = 0;
@@ -314,6 +305,9 @@ void event_init_event_code_set(papify_action_s* papify_action, int code_set_size
 	}
 }
 
+/* 
+* This function initializes all the variables of the papify_action_s
+*/
 void event_init_papify_actions(papify_action_s* papify_action, char* componentName, char* PEName, char* actorName, int num_events) {
 
 	papify_action->counterValues = malloc(sizeof(long long) * num_events);
@@ -337,32 +331,45 @@ void event_init_papify_actions(papify_action_s* papify_action, char* componentNa
 	papify_action->papify_output_file = malloc(sizeof(FILE) * 1);
 }
 
+/* 
+* This function stores the starting point of the timing monitoring using PAPI_get_real_usec() function
+*/
 void event_start_papify_timing(papify_action_s* papify_action){
 	
 	papify_action[0].time_init_action = PAPI_get_real_usec() - time_zero;
 }
 
+/* 
+* This function stores the ending point of the timing monitoring using PAPI_get_real_usec() function
+*/
 void event_stop_papify_timing(papify_action_s* papify_action){
 	
 	papify_action[0].time_end_action = PAPI_get_real_usec() - time_zero;
 }
 
-void configure_papify(papify_action_s* papify_action, char* componentName, char* PEName, char* actorName, int num_events, char* all_events_name, int PE_id){
+/* 
+* This function configures all the monitoring environment (initialization, file creation, event translation, eventSet creation and launches the monitoring)
+* It should be noted that, so far, Papify supports the monitoring of the same events for all the functions executed by each PE. 
+*/
+void configure_papify(papify_action_s* papify_action, char* componentName, char* PEName, char* actorName, int num_events, char* all_events_name, int eventSet_id){
 
 	event_init_papify_actions(papify_action, componentName, PEName, actorName, num_events);
 	event_init_output_file(papify_action, actorName, all_events_name);
 
 	pthread_mutex_lock(&lock);
-    	if(papify_eventSet_PEs_launched[PE_id] == 0 && papify_action[0].num_counters != 0){
+    	if(papify_eventSet_PEs_launched[eventSet_id] == 0 && papify_action[0].num_counters != 0){
 		event_init_event_code_set(papify_action, num_events, all_events_name);
 	
 		event_create_eventList_unified(papify_action);
-		event_launch(papify_action, PE_id);
-		papify_eventSet_PEs_launched[PE_id] = 1;
+		event_launch(papify_action, eventSet_id);
+		papify_eventSet_PEs_launched[eventSet_id] = 1;
 	}
 	pthread_mutex_unlock(&lock);
 }
 
+/* 
+* This function writes all the monitoring information as a new line of the .csv file
+*/
 void event_write_file(papify_action_s* papify_action){
 
 	char output_file_name[250];
