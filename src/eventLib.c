@@ -13,7 +13,7 @@ int papify_eventSet_PEs_launched[500];
 /* 
 * Print the structure to check whether it is configured correctly
 */
-void structure_test(papify_action_s *someAction, int eventCodeSetSize, int *eventCodeSet){
+void structure_test(papify_action_s *someAction, int eventCodeSetSize, int *eventCodeSet) {
     int i;
     printf("Action name: %s\n", someAction->action_id);
     printf("Event Code Set:\n");
@@ -101,10 +101,7 @@ static void init_multiplex( void ) {
 }
 
 
-/* 
-* Initialize PAPI library and get the init time (this function should be the called before any other monitoring function)
-* It also stores the value of time_zero, which should be the starting point of the program
-*/
+
 void event_init(void) {
 
     int retval;
@@ -128,9 +125,7 @@ void event_init(void) {
     }
 }
 
-/* 
-* Initialize PAPI library and multiplex functionalities
-*/
+
 void event_init_multiplex(void) {
 
     int retval;
@@ -163,10 +158,8 @@ void event_init_multiplex(void) {
     }
 }
 
-/* 
-* Activates the multiplexing functionality when monitoring the system
-*/
-void eventList_set_multiplex_unified(papify_action_s* papify_action){
+
+void eventList_set_multiplex_unified(papify_action_s* papify_action) {
 	int retval;
 
     retval = PAPI_set_multiplex( papify_action[0].papify_eventSet );
@@ -215,11 +208,8 @@ void event_create_eventList_unified(papify_action_s* papify_action) {
     }
 }
 
-/* 
-* Launch the monitoring of the eventSet. This eventSet will be counting from the beginning and the actual values will
-* be computed by differences with event_start and event_stop functions
-*/
-void event_launch(papify_action_s* papify_action, int eventSet_id){
+
+void event_launch(papify_action_s* papify_action, int eventSet_id) {
 
     int retval;
     papify_eventSet_PEs[eventSet_id] = papify_action[0].papify_eventSet;
@@ -228,9 +218,7 @@ void event_launch(papify_action_s* papify_action, int eventSet_id){
         test_fail( __FILE__, __LINE__, "PAPI_start",retval );
 }
 
-/* 
-* Read the current values of the event counters and stores them as the starting point
-*/
+
 void event_start(papify_action_s* papify_action, int eventSet_id){
 
     int retval;
@@ -241,10 +229,7 @@ void event_start(papify_action_s* papify_action, int eventSet_id){
         test_fail( __FILE__, __LINE__, "PAPI_read",retval );
 }
 
-/* 
-* Read the current values of the event counters and stores them as the ending point.
-* After that, the total value is computed by differences and stored as the total value
-*/
+
 void event_stop(papify_action_s* papify_action, int eventSet_id) {
 
     int retval, i;
@@ -259,9 +244,6 @@ void event_stop(papify_action_s* papify_action, int eventSet_id) {
 
 }
 
-/* 
-* Create the .csv file associated to each function and prints the header of the file
-*/
 void event_init_output_file(papify_action_s* papify_action, char* actorName, char* all_events_name) {
 	
 	char file_name[256];
@@ -275,9 +257,7 @@ void event_init_output_file(papify_action_s* papify_action, char* actorName, cha
 	fclose(papify_action->papify_output_file);
 }
 
-/* 
-* This function translates the name of the events to be monitored to the PAPI codes associated to each event
-*/
+
 void event_init_event_code_set(papify_action_s* papify_action, int code_set_size, char* all_events_name) {
 	
 	int i = 0;
@@ -305,9 +285,7 @@ void event_init_event_code_set(papify_action_s* papify_action, int code_set_size
 	}
 }
 
-/* 
-* This function initializes all the variables of the papify_action_s
-*/
+
 void event_init_papify_actions(papify_action_s* papify_action, char* componentName, char* PEName, char* actorName, int num_events) {
 
 	papify_action->counterValues = malloc(sizeof(long long) * num_events);
@@ -331,18 +309,13 @@ void event_init_papify_actions(papify_action_s* papify_action, char* componentNa
 	papify_action->papify_output_file = malloc(sizeof(FILE) * 1);
 }
 
-/* 
-* This function stores the starting point of the timing monitoring using PAPI_get_real_usec() function
-*/
-void event_start_papify_timing(papify_action_s* papify_action){
+void event_start_papify_timing(papify_action_s* papify_action) {
 	
 	papify_action[0].time_init_action = PAPI_get_real_usec() - time_zero;
 }
 
-/* 
-* This function stores the ending point of the timing monitoring using PAPI_get_real_usec() function
-*/
-void event_stop_papify_timing(papify_action_s* papify_action){
+
+void event_stop_papify_timing(papify_action_s* papify_action) {
 	
 	papify_action[0].time_end_action = PAPI_get_real_usec() - time_zero;
 }
@@ -351,7 +324,7 @@ void event_stop_papify_timing(papify_action_s* papify_action){
 * This function configures all the monitoring environment (initialization, file creation, event translation, eventSet creation and launches the monitoring)
 * It should be noted that, so far, Papify supports the monitoring of the same events for all the functions executed by each PE. 
 */
-void configure_papify(papify_action_s* papify_action, char* componentName, char* PEName, char* actorName, int num_events, char* all_events_name, int eventSet_id){
+void configure_papify(papify_action_s* papify_action, char* componentName, char* PEName, char* actorName, int num_events, char* all_events_name, int eventSet_id) {
 
 	event_init_papify_actions(papify_action, componentName, PEName, actorName, num_events);
 	event_init_output_file(papify_action, actorName, all_events_name);
