@@ -61,9 +61,18 @@ public:
                  const char* PEId,
                  const char* actorName,
                  int numberOfEvents,
-                 std::vector<char*>& moniteredEventSet,
+                 std::vector<const char*>& moniteredEventSet,
                  int eventSetID,
-                 bool monitorTime, PapifyEventLib& papifyEventLib);
+                 bool monitorTime,
+                 PapifyEventLib* papifyEventLib);
+    /**
+     * @brief Initialize a new PapifyAction object by copying properties of an other one
+     *
+     * @param papifyAction  Original PapifyAction
+     * @param PEId          The PE id
+     */
+    PapifyAction(PapifyAction& papifyAction, const char* PEId);
+
     ~PapifyAction();
 
     /**
@@ -73,25 +82,48 @@ public:
 
     /**
      * @brief stop the monitoring of the events;
+     *
      */
     void stopMonitor(void);
 
     /**
      * @brief Write the events values
+     *
+     * @remark Uses actor specific file.
+     * @remark First call will be slower as the file will be created.
      */
     void writeEvents();
+
+
+    /**
+     * @brief Write the events values
+     *
+     * @param file The file to which the events should be written
+     *
+     * @remark Assumption is made that the header of the files is already written
+     */
+    void writeEvents(FILE* file);
+
+    inline PapifyEventLib* getPapifyEventLib() {
+        return papifyEventLib_;
+    }
+
+    inline void addLRT(int lrtID) {
+        lrtIDs_.push_back(lrtID);
+    }
+
 private:
     const char* PEId_;
     const char* PEType_;
     const char* actorName_;
 
     // PapifyEventLib handler
-    PapifyEventLib& papifyEventLib_;
+    PapifyEventLib* papifyEventLib_;
 
     // PAPI event code
-    std::vector<int> PAPIEventCodeSet;
-    // PAPI event set
-    int PAPIEventSetID;
+    std::vector<int> PAPIEventCodeSet_;
+    // PAPI event set ID
+    int PAPIEventSetID_;
     // Number of event to be monitored
     int  numberOfEvents_;
     // Counters values associated with the events
@@ -104,6 +136,9 @@ private:
     bool monitorTiming_;
     long long timeStart;
     long long timeStop;
+
+    // Vector of LRTs using this specific configuration
+    std::vector<int> lrtIDs_;
 
     // The file for writing the results
     FILE* outputFile_;

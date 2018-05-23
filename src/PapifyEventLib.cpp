@@ -39,6 +39,7 @@
 PapifyEventLib::~PapifyEventLib() {
     if (configLock_) {
         pthread_mutex_destroy(configLock_);
+        delete configLock_;
     }
 }
 
@@ -75,7 +76,7 @@ static void PAPIInitMultiplex() {
     }
 }
 
-PapifyEventLib::PapifyEventLib() : PEEventSets_(50, PAPI_NULL), PEEventSetLaunched_(50, 0) {
+PapifyEventLib::PapifyEventLib() {
     // Init PAPI
     int retVal = PAPI_library_init(PAPI_VER_CURRENT);
     if (retVal != PAPI_VER_CURRENT) {
@@ -103,6 +104,7 @@ PapifyEventLib::PapifyEventLib() : PEEventSets_(50, PAPI_NULL), PEEventSetLaunch
 void PapifyEventLib::throwError(const char* file, int line, const char *message) {
     fprintf(stderr, "File: %s\n", file);
     fprintf(stderr, "Line: %d\n", line);
+    fprintf(stderr, "%s\n", message);
     throw message;
 }
 
@@ -115,22 +117,14 @@ void PapifyEventLib::throwError(const char* file, int line, int papiErrorCode) {
     throwError(file, line, "an error occured");
 }
 
-long long PapifyEventLib::getZeroTime() {
-    return zeroTime_;
-}
-
-bool PapifyEventLib::isEventSetLaunched(int eventSetID) {
-    if (eventSetID > PEEventSetLaunched_.size()) {
-        return false;
-    }
-    return PEEventSetLaunched_[eventSetID] != 0;
-}
 
 int PapifyEventLib::PAPIEventSetInit(int numberOfEvents,
-                                     std::vector<char *> &moniteredEventSet,
-                                     int eventSetID, const char* PEType) {
-    std::vector<int> PAPIEventCodeSet((unsigned long)numberOfEvents);
-    // 1. Retrieve the PAPI event code
+                                     std::vector<const char *> &moniteredEventSet,
+                                     int eventSetID,
+                                     const char* PEType,
+                                     const char* PEId,
+                                     std::vector<int> &PAPIEventCodeSet) {
+    // 1. Retrieve the PAPI event codes
     for (int i = 0; i < numberOfEvents; ++i) {
         const char* eventName = moniteredEventSet[i];
         int retVal = PAPI_event_name_to_code(eventName, &PAPIEventCodeSet[i]);
@@ -145,7 +139,14 @@ int PapifyEventLib::PAPIEventSetInit(int numberOfEvents,
         throwError(__FILE__, __LINE__, "eventCodeSetMaxSize < eventCodeSetSize, too many performance events defined!");
         return -1;
     }
+    return registerNewThread(numberOfEvents, PEType, PEId, eventSetID, PAPIEventCodeSet);
+}
 
+int PapifyEventLib::registerNewThread(int numberOfEvents,
+                                      const char* PEType,
+                                      const char* PEId,
+                                      int eventSetID,
+                                      std::vector<int> &PAPIEventCodeSet) {
     // Register thread
     int retVal = PAPI_register_thread();
     if (retVal != PAPI_OK) {
@@ -186,6 +187,21 @@ int PapifyEventLib::PAPIEventSetInit(int numberOfEvents,
             return -1;
         }
     }
-    PEEventSets_[eventSetID] = PAPIEventSetID;
+    // The hash table between the user event set ID and the PAPI event set ID
+    PEEventSets_[PEId][eventSetID] = PAPIEventSetID;
     return PAPIEventSetID;
+}
+
+
+
+void PapifyEventLib::getPAPIEventCodeSet(std::vector<const char *> &moniteredEventSet,
+                                         std::vector<int> &PAPIEventCodeSet) {
+    unsigned long numberOfEvents = moniteredEventSet.size();
+    for (unsigned long i = 0; i < numberOfEvents; ++i) {
+        const char* eventName = moniteredEventSet[i];
+        int retVal = PAPI_event_name_to_code(eventName, &PAPIEventCodeSet[i]);
+        if (retVal != PAPI_OK) {
+            throwError(__FILE__, __LINE__, retVal);
+        }
+    }
 }
