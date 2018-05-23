@@ -29,7 +29,7 @@
 #define NORMAL "\033[0m"
 
 static int TESTS_COLOR = 0;
-
+ 
 /*
 * Papify_action_s structure stores the information related to the monitoring of the function being monitored
 *
@@ -40,13 +40,28 @@ typedef struct papify_action_s {
 	long long *counterValues; 		// Total number of events associated to the function execution
 	long long *counterValuesStart; 		// Starting point
 	long long *counterValuesStop; 		// End point (required to measure events by differences)
-	char *component_id;			// PAPI component associated to the PE executing the function
-	char *PE_id;			// ID associated to the eventSet to be monitored. This ID needs to be different for functions executed in parallel, as the eventSets are associated to specific threads
+	char *component_id;			// PAPI component associated to the eventSet of the function
+	char *PE_id;				// ID associated to the eventSet to be monitored. This ID needs to be different for functions executed in parallel, as the eventSets are associated to specific threads
 	int num_counters;			// Number of events being monitored
 	unsigned long long time_init_action;	// Starting time of the function
 	unsigned long long time_end_action;	// Ending time of the function
 	FILE* papify_output_file;		// File where the monitoring data will be stored
 	int* papify_eventCodeSet;		// Code of the events that are being monitored
 	int papify_eventSet;			// EventSet associated to the monitoring of the function
+	int papify_eventSet_ID;			// ID of the eventSet associated to the monitoring of the function
 	
 } papify_action_s;
+
+/*
+* PE information required for monitoring dinamically
+*
+*/
+
+typedef struct papify_PE_s {
+	char *PE_id;				// ID associated to the eventSet to be monitored.
+	int papify_eventSet_ID;			// ID of the eventSet running in the current thread
+	int papify_eventSet_ID_original[20];	// ID of the original eventSet associated to the monitoring of the function
+	
+} papify_PE_s;
+
+
