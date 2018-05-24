@@ -29,7 +29,7 @@
 */
 
 typedef struct papify_action_s {
-	char *action_id;			// Name of the function being monitored
+	char *actor_id;				// Name of the function being monitored
 	long long *counterValues; 		// Total number of events associated to the function execution
 	long long *counterValuesStart; 		// Starting point
 	long long *counterValuesStop; 		// End point (required to measure events by differences)

@@ -99,7 +99,7 @@ void event_create_eventSet(papify_action_s* papify_action, int element_id, int d
 	papify_PEs_info[element_id].papify_eventSet_ID_original[papify_action[0].papify_eventSet] = papify_eventSet;
     }
 	
-	printf("For %s the eventSet is %d\n", papify_action[0].action_id, papify_action[0].papify_eventSet);
+	printf("For %s the eventSet is %d\n", papify_action[0].actor_id, papify_action[0].papify_eventSet);
 }
 
 /* 
@@ -137,9 +137,8 @@ void event_init_event_code_set(papify_action_s* papify_action, int code_set_size
 	int i = 0;
 	int event_code = 0;
 	int retval;
-	char all_events_name_local[500];
-
-	snprintf(all_events_name_local, sizeof(all_events_name_local), "%s", all_events_name);
+	char* all_events_name_local = malloc(strlen(all_events_name)+1);;
+	snprintf(all_events_name_local, (strlen(all_events_name)+1) * sizeof(char), "%s", all_events_name);
 	char* event_name;
 
 	event_name = strtok(all_events_name_local, ",");
@@ -202,7 +201,7 @@ void event_init_output_file(papify_action_s* papify_action, char* actorName, cha
 	snprintf(file_name, sizeof file_name, "%s%s%s", "papify-output/papify_output_", actorName, ".csv");
 
 	char output_string[1024];
-	snprintf(output_string, sizeof output_string, "%s%s%s", "Actor,Action,tini,tend,", all_events_name, "\n");
+	snprintf(output_string, sizeof output_string, "%s%s%s", "PE,Actor,tini,tend,", all_events_name, "\n");
 
 	papify_action->papify_output_file = fopen(file_name,"w");
 	fprintf(papify_action->papify_output_file, "%s", output_string);
@@ -218,8 +217,8 @@ void event_init_papify_actions(papify_action_s* papify_action, char* componentNa
 	papify_action->counterValuesStart = malloc(sizeof(long long) * num_events);
 	papify_action->counterValuesStop = malloc(sizeof(long long) * num_events);
 
-	papify_action[0].action_id = malloc(strlen(actorName)+1);
-	snprintf(papify_action[0].action_id, (strlen(actorName)+1) * sizeof(char), "%s", actorName);
+	papify_action[0].actor_id = malloc(strlen(actorName)+1);
+	snprintf(papify_action[0].actor_id, (strlen(actorName)+1) * sizeof(char), "%s", actorName);
 
 	papify_action[0].component_id = malloc(strlen(componentName)+1);
 	snprintf(papify_action[0].component_id, (strlen(componentName)+1) * sizeof(char), "%s", componentName);
@@ -328,11 +327,11 @@ void event_write_file(papify_action_s* papify_action){
 	char output_file_name[250];
 	int i;
 
-	snprintf(output_file_name, sizeof output_file_name, "%s%s%s", "papify-output/papify_output_", papify_action[0].action_id, ".csv");
+	snprintf(output_file_name, sizeof output_file_name, "%s%s%s", "papify-output/papify_output_", papify_action[0].actor_id, ".csv");
 
 	papify_action[0].papify_output_file = fopen(output_file_name,"a+");
 
-	fprintf(papify_action[0].papify_output_file, "%s,%s,%llu,%llu", papify_action[0].PE_id, papify_action[0].action_id, papify_action[0].time_init_action, papify_action[0].time_end_action);
+	fprintf(papify_action[0].papify_output_file, "%s,%s,%llu,%llu", papify_action[0].PE_id, papify_action[0].actor_id, papify_action[0].time_init_action, papify_action[0].time_end_action);
 
 	for(i = 0; i < papify_action[0].num_counters; i++){
 		fprintf(papify_action[0].papify_output_file, ",%llu", papify_action[0].counterValues[i]);
@@ -383,7 +382,7 @@ void init_multiplex( void ) {
 */
 void structure_test(papify_action_s *someAction, int eventCodeSetSize, int *eventCodeSet){
     int i;
-    printf("Action name: %s\n", someAction->action_id);
+    printf("Action name: %s\n", someAction->actor_id);
     printf("Event Code Set:\n");
     for(i=0; i<eventCodeSetSize; i++){
         printf("\t-%d\n", eventCodeSet[i]);
