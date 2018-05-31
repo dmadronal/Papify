@@ -22,7 +22,7 @@
 #include <sys/time.h>
 #include <pthread.h>
 #include "papiStdEventDefs.h"
- 
+
 /*
 * Papify_action_s structure stores the information related to the monitoring of the function being monitored
 *
@@ -66,9 +66,9 @@ void event_init_output_file(papify_action_s* papify_action, char* actorName, cha
 void event_init_papify_actions(papify_action_s* papify_action, char* componentName, char* actorName, int num_events);
 void event_launch(papify_action_s* papify_action, int PE_id);
 void event_start(papify_action_s* papify_action, int PE_id);
-void event_start_papify_timing(papify_action_s* papify_action);
+void event_start_papify_timing(papify_action_s* papify_action, int PE_id);
 void event_stop(papify_action_s* papify_action, int PE_id);
-void event_stop_papify_timing(papify_action_s* papify_action);
+void event_stop_papify_timing(papify_action_s* papify_action, int PE_id);
 void event_write_file(papify_action_s* papify_action);
 void eventSet_set_multiplex(papify_action_s* papify_action);
 void init_multiplex();

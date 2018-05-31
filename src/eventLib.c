@@ -52,6 +52,9 @@ void event_create_eventSet(papify_action_s* papify_action, int element_id, int d
     int retval, i, eventCodeSetMaxSize;// maxNumberHwCounters;
     PAPI_event_info_t info;
     int papify_eventSet;
+    PAPI_option_t opt;
+	PAPI_option_t opt2;
+PAPI_multiplex_option_t mult;
 
     if(dynamic == 0){
 	papify_eventSet = papify_action[0].papify_eventSet;
@@ -75,9 +78,6 @@ void event_create_eventSet(papify_action_s* papify_action, int element_id, int d
     if ( retval == PAPI_ENOCMP )
    	retval = PAPI_assign_eventset_component( papify_eventSet, 0 );
 
-    if ( retval != PAPI_OK )
-        test_fail( __FILE__, __LINE__, "PAPI_assign_eventset_component", retval );
-
     retval = PAPI_set_multiplex( papify_eventSet );
     	if ( retval != PAPI_OK )
 	    test_fail( __FILE__, __LINE__, "PAPI_set_multiplex", retval );
@@ -89,7 +89,7 @@ void event_create_eventSet(papify_action_s* papify_action, int element_id, int d
         retval = PAPI_add_event( papify_eventSet, info.event_code);
         if ( retval != PAPI_OK )
             test_fail( __FILE__, __LINE__, "PAPI_add_event", retval );
-    }
+    }	
 
     if(dynamic == 0){
     	papify_eventSet_actor[element_id] = papify_eventSet;
@@ -288,8 +288,9 @@ void event_start(papify_action_s* papify_action, int PE_id){
 /* 
 * This function stores the starting point of the timing monitoring using PAPI_get_real_usec() function
 */
-void event_start_papify_timing(papify_action_s* papify_action){
+void event_start_papify_timing(papify_action_s* papify_action, int PE_id){
 	
+	snprintf(papify_action[0].PE_id, (strlen(papify_PEs_info[PE_id].PE_id)+1) * sizeof(char), "%s", papify_PEs_info[PE_id].PE_id);
 	papify_action[0].time_init_action = PAPI_get_real_usec() - time_zero;
 }
 
@@ -314,8 +315,9 @@ void event_stop(papify_action_s* papify_action, int PE_id) {
 /* 
 * This function stores the ending point of the timing monitoring using PAPI_get_real_usec() function
 */
-void event_stop_papify_timing(papify_action_s* papify_action){
+void event_stop_papify_timing(papify_action_s* papify_action, int PE_id){
 	
+	snprintf(papify_action[0].PE_id, (strlen(papify_PEs_info[PE_id].PE_id)+1) * sizeof(char), "%s", papify_PEs_info[PE_id].PE_id);
 	papify_action[0].time_end_action = PAPI_get_real_usec() - time_zero;
 }
 
@@ -371,6 +373,7 @@ void init_multiplex( void ) {
             test_fail(__FILE__, __LINE__, "PAPI_set_domain", retval);
         }
     }
+	printf("A\n");
     retval = PAPI_multiplex_init();
     if (retval != PAPI_OK) {
         test_fail(__FILE__, __LINE__, "PAPI multiplex init fail\n", retval);
