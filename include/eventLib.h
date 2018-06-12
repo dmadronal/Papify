@@ -52,13 +52,14 @@ typedef struct papify_action_s {
 typedef struct papify_PE_s {
 	char *PE_id;				// ID associated to the eventSet to be monitored.
 	int papify_eventSet_ID;			// ID of the eventSet running in the current thread
-	int papify_eventSet_ID_original[20];	// ID of the original eventSet associated to the monitoring of the function
+	int papify_eventSet_ID_original[50];	// ID of the original eventSet associated to the monitoring of the function
 	
 } papify_PE_s;
  
 void configure_papify_actor(papify_action_s* papify_action, char* componentName, char* actorName, int num_events, char* all_events_name, int actor_id);
 void configure_papify_PE(char* PEName, int PE_id);
 void event_create_eventSet(papify_action_s* papify_action, int element_id, int dynamic);
+void event_destroy();
 void event_init();
 void event_init_event_code_set(papify_action_s* papify_action, int code_set_size, char* all_events_name);
 void event_init_multiplex();
