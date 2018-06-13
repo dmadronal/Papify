@@ -84,7 +84,10 @@ void event_create_eventSet(papify_action_s* papify_action, int element_id, int d
 			printf("Can't A PAPI_MULTIPLEX: %s\n",
 				PAPI_strerror(retval));
 		}
-		printf("EventSet %d for actor %s needs multiplexing --> multiplexing period equal to %dns\n", papify_action[0].papify_eventSet, papify_action[0].actor_id, opt.itimer.ns);
+		printf("For %s monitoring %d events --> Multiplexing (Max HW counters = %d)\n", papify_action[0].actor_id, papify_action[0].num_counters, maxNumberHwCounters);
+	}
+	else{
+		printf("For %s monitoring %d events --> No multiplexing\n", papify_action[0].actor_id, papify_action[0].num_counters);
 	}
 
 	for (i = 0; i < papify_action[0].num_counters; i++) {
@@ -104,7 +107,7 @@ void event_create_eventSet(papify_action_s* papify_action, int element_id, int d
 		papify_PEs_info[element_id].papify_eventSet_ID_original[papify_action[0].papify_eventSet] = papify_eventSet;
 	}
 	
-	printf("For %s the eventSet is %d\n", papify_action[0].actor_id, papify_action[0].papify_eventSet);
+	
 }
 /* 
 * Cleanup and destroy of every variable created to monitor with Papify (this function should be called when the application is going to finish)
@@ -328,8 +331,7 @@ void event_profiling() {
         	fprintf(stderr, "Error : Failed to open common_file - %s\n", strerror(errno));
         	return;
     	}
-	fprintf(common_file, "Application profiling\n");
-	fprintf(common_file, "Actor,NB of events being monitored,NB of executions,Average values\n");
+	fprintf(common_file, "Application profiling -- Actor,NB of events being monitored,NB of executions,Average values\n");
     	/* Scanning the in directory */
     	if (NULL == (FD = opendir ("./papify-output"))){
         	fprintf(stderr, "Error : Failed to open input directory - %s\n", strerror(errno));
@@ -359,7 +361,7 @@ void event_profiling() {
 		if (fgets(buffer, BUFSIZ, entry_file) != NULL){
             		cellValue = strtok(buffer, ","); // PE
             		cellValue = strtok(NULL, ","); // Actor
-			fprintf(common_file, "%s", cellValue);
+			fprintf(common_file, "\n%s,totalEvents,totalExecutions", cellValue);
 			totalCells = 0;
             		cellValue = strtok(NULL, ","); // tini
             		cellValue = strtok(NULL, ","); // tfin
