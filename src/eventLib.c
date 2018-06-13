@@ -299,6 +299,122 @@ void event_launch(papify_action_s* papify_action, int PE_id){
 }
 
 /* 
+* Read all the .csv files and generates a new one with a profiling associated to each actor
+*/
+void event_profiling() {
+	
+	DIR* FD;
+	struct dirent* in_file;
+	FILE *common_file;
+	FILE *entry_file;
+	char buffer[BUFSIZ];
+	char input_file_name[256];
+	unsigned long long averageValues[50];
+	char* cellValue;
+	char* actorName;
+	int totalCells = 0;
+	int i;
+	int counterCells = 0;
+	int totalExecutions = 0;
+	unsigned long long initTime;
+	unsigned long long endTime;
+	unsigned long long executionTime;
+	int maxNumberHwCounters;
+
+	maxNumberHwCounters = PAPI_get_opt( PAPI_MAX_HWCTRS, NULL );
+    	/* Opening common file for writing */
+    	common_file = fopen("papify-output/papify_output_profiling.csv", "w");
+    	if (common_file == NULL){
+        	fprintf(stderr, "Error : Failed to open common_file - %s\n", strerror(errno));
+        	return;
+    	}
+	fprintf(common_file, "Application profiling\n");
+	fprintf(common_file, "Actor,NB of events being monitored,NB of executions,Average values\n");
+    	/* Scanning the in directory */
+    	if (NULL == (FD = opendir ("./papify-output"))){
+        	fprintf(stderr, "Error : Failed to open input directory - %s\n", strerror(errno));
+        	fclose(common_file);
+        	return;
+    	}
+    	while ((in_file = readdir(FD)) != NULL){
+		/* Avoid opening wrong files
+	 	*/
+		if (!strcmp (in_file->d_name, "."))
+	    		continue;
+		if (!strcmp (in_file->d_name, ".."))    
+	    		continue;
+		if (!strcmp (in_file->d_name, "papify_output_profiling.csv"))    
+	    		continue;
+
+		/* Open directory entry file for common operation */
+		snprintf(input_file_name, sizeof input_file_name, "%s%s", "papify-output/", in_file->d_name);
+		entry_file = fopen(input_file_name, "r");
+		if (entry_file == NULL){
+	    		fprintf(stderr, "Error : Failed to open entry file - %s\n", strerror(errno));
+	    		fclose(common_file);
+	    		return;
+		}
+		/* Doing some struf with entry_file : */
+		/* For example use fgets */
+		if (fgets(buffer, BUFSIZ, entry_file) != NULL){
+            		cellValue = strtok(buffer, ","); // PE
+            		cellValue = strtok(NULL, ","); // Actor
+			fprintf(common_file, "%s", cellValue);
+			totalCells = 0;
+            		cellValue = strtok(NULL, ","); // tini
+            		cellValue = strtok(NULL, ","); // tfin
+            		cellValue = strtok(NULL, ","); // First event
+			while(cellValue != NULL){
+				averageValues[totalCells] = 0;
+				totalCells++;
+				fprintf(common_file, ",%s", cellValue);
+            			cellValue = strtok(NULL, ",");				
+			}
+		}
+		totalExecutions = 0;
+		executionTime = 0;
+		counterCells = 0;
+		while (fgets(buffer, BUFSIZ, entry_file) != NULL){
+			totalExecutions++;
+			counterCells = 0;
+			buffer[strlen(buffer)-1] = 0;
+			cellValue = strtok(buffer, ","); // PE
+            		actorName = strtok(NULL, ","); // Actor
+            		cellValue = strtok(NULL, ","); // tini
+            		initTime = strtoull(cellValue, NULL, 10);
+            		cellValue = strtok(NULL, ","); // tfin
+            		endTime = strtoull(cellValue, NULL, 10);
+			executionTime = executionTime + (endTime - initTime);
+            		cellValue = strtok(NULL, ",");
+			while(cellValue != NULL){
+				averageValues[counterCells] = averageValues[counterCells] + strtoull(cellValue, NULL, 10);
+				counterCells++;
+            			cellValue = strtok(NULL, ",");
+			}
+		}
+		if(maxNumberHwCounters<totalCells){
+			printf("WARNING: %s monitoring needed multiplexing --> Some values could have been corrupted by outliers\n", actorName);
+			printf("TIP: please, consider monitoring up to %d events at the same time to avoid multiplexing\n", maxNumberHwCounters);
+
+		}
+		fprintf(common_file, "%s", actorName);
+		fprintf(common_file, ",%d", totalCells);
+		fprintf(common_file, ",%d", totalExecutions);
+		fprintf(common_file, ",%llu", executionTime/totalExecutions);
+		for(i = 0; i < totalCells; i++){
+			fprintf(common_file, ",%llu", averageValues[i]/totalExecutions);			
+		}
+		/* When you finish with the file, close it */
+		fprintf(common_file, "\n");
+		fclose(entry_file);
+    	}
+    	/* Don't forget to close common file before leaving */
+    	fclose(common_file);
+
+    	return;
+}
+
+/* 
 * Read the current values of the event counters and stores them as the starting point
 */
 void event_start(papify_action_s* papify_action, int PE_id){
@@ -354,7 +470,12 @@ void event_stop(papify_action_s* papify_action, int PE_id) {
 	if(papify_action[0].num_counters != 0){
 		retval = PAPI_read( papify_PEs_info[PE_id].papify_eventSet_ID, papify_action->counterValuesStop );
 	for(i = 0; i < papify_action[0].num_counters; i++){
-		papify_action[0].counterValues[i] = papify_action[0].counterValuesStop[i] - papify_action[0].counterValuesStart[i];
+		//if(papify_action[0].counterValuesStop[i] > papify_action[0].counterValuesStart[i]){
+			papify_action[0].counterValues[i] = papify_action[0].counterValuesStop[i] - papify_action[0].counterValuesStart[i];
+		//}
+		/*else{
+			papify_action[0].counterValues[i] = papify_action[0].counterValuesStart[i] - papify_action[0].counterValuesStop[i];
+		}*/
 	}
 	if ( retval != PAPI_OK )
 		test_fail( __FILE__, __LINE__, "PAPI_read",retval );

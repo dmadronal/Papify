@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <pthread.h>
+#include <dirent.h>
 #include "papiStdEventDefs.h"
 
 /*
@@ -66,6 +67,7 @@ void event_init_multiplex();
 void event_init_output_file(papify_action_s* papify_action, char* actorName, char* all_events_name);
 void event_init_papify_actions(papify_action_s* papify_action, char* componentName, char* actorName, int num_events);
 void event_launch(papify_action_s* papify_action, int PE_id);
+void event_profiling();
 void event_start(papify_action_s* papify_action, int PE_id);
 void event_start_papify_timing(papify_action_s* papify_action, int PE_id);
 void event_stop(papify_action_s* papify_action, int PE_id);
