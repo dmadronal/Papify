@@ -2,6 +2,10 @@
     This file is customized to hide Windows / Unix differences.
 */
 
+#ifndef EVENT_LIB
+#define EVENT_LIB
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 
